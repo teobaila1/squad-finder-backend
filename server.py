@@ -10,8 +10,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
 
 SUPABASE_URL = os.environ['SUPABASE_URL']
 SUPABASE_SERVICE_KEY = os.environ['SUPABASE_SERVICE_KEY']  # service_role key - NICIODATA in frontend!
