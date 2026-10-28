@@ -232,6 +232,31 @@ def total_spots(fmt: str) -> int:
         return 10
 
 
+
+@api_router.delete("/matches/{match_id}")
+async def delete_match(match_id: str, current_user: CurrentUser):
+    # 1. Verificăm dacă meciul există
+    res = sb.table('matches').select('*').eq('id', match_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Meciul nu a fost găsit.")
+    
+    match = res.data[0]
+
+    # 2. Verificăm dacă utilizatorul care face cererea este organizatorul
+    if match['organizer_id'] != current_user['id']:
+        raise HTTPException(status_code=403, detail="Nu ai permisiunea de a șterge acest meci.")
+
+    # 3. Ștergem meciul. 
+    # (Datorită setărilor bazei de date 'on delete cascade', înregistrările din match_players asociate ar trebui șterse automat)
+    try:
+        sb.table('matches').delete().eq('id', match_id).execute()
+    except Exception as exc:
+        db_error("delete_match", exc)
+
+    return {'message': 'Meciul a fost șters cu succes.'}
+
+
+
 @api_router.post("/matches")
 async def create_match(data: MatchCreate, current_user: CurrentUser):
     invite_code = str(uuid.uuid4())[:8].upper()
