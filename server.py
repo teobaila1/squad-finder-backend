@@ -171,6 +171,10 @@ class PlayerReportCreate(BaseModel):
     match_id: Optional[str] = None
 
 
+class MessageCreate(BaseModel):
+    text: str
+
+
 # ---- Auth Routes ----
 
 @api_router.post("/auth/signup")
@@ -230,6 +234,28 @@ def total_spots(fmt: str) -> int:
         return per_side * 2
     except Exception:
         return 10
+
+
+
+@api_router.get("/matches/{match_id}/messages")
+async def get_match_messages(match_id: str, current_user: CurrentUser):
+    # Aducem mesajele ordonate cronologic (cele mai vechi primele)
+    res = sb.table('match_messages').select('*').eq('match_id', match_id).order('created_at', desc=False).execute()
+    return res.data
+
+
+
+@api_router.post("/matches/{match_id}/messages")
+async def send_match_message(match_id: str, data: MessageCreate, current_user: CurrentUser):
+    message_doc = {
+        'match_id': match_id,
+        'user_id': current_user['id'],
+        'user_name': current_user.get('full_name', 'Jucător'),
+        'text': data.text
+    }
+    res = sb.table('match_messages').insert(message_doc).execute()
+    return res.data[0]
+
 
 
 
